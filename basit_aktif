@@ -1,0 +1,5 @@
+select 'ALTER SYSTEM KILL SESSION ' || '''' || SID || ',' || SERIAL# ||  ',' || '@' || INST_ID|| '''' || ' IMMEDIATE ' || ';',
+sid,blocking_session,final_blocking_session,last_call_et,username,sql_id,OSUSER,event,machine,module,logon_time from gv$session where  status='ACTIVE' and type!='BACKGROUND'
+and last_call_et>3
+and event not in ('PL/SQL lock timer')-- and username='APP_JOB_USER'
+order by last_call_et DESC;
