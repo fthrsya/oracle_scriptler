@@ -1,0 +1,35 @@
+select *from gv$instance;
+
+select tablespace_name,
+               'SQLDEV:GAUGE:0:100:25:100:' || round(100 - tot_usable_space / maxsizelimit * 100) used_percent,
+               round(100 - tot_usable_space / maxsizelimit * 100) oran
+          from (select TABLESPACE_NAME,
+                       tot,
+                       maxsizelimit + nvl(free, 0) - TOT tot_usable_space,
+                       free,
+                       maxsizelimit
+                  from (select tablespace_name,
+                               (select round(sum(bytes) / 1024 / 1024)
+                                  from dba_data_files
+                                 where tablespace_name = a.tablespace_name) tot,
+                               (select round(sum(bytes) / 1024 / 1024)
+                                  from dba_free_space
+                                 where tablespace_name = a.tablespace_name) free,
+                               (select round(sum(decode(autoextensible,
+                                                        'YES',
+                                                        maxbytes,
+                                                        'NO',
+                                                        bytes)) / 1024 / 1024)
+                                  from dba_data_files
+                                 where tablespace_name = a.tablespace_name) maxsizelimit
+                          from dba_tablespaces a))
+         where tot is not null
+          order by 2 desc;
+
+
+select name, total_mb, free_mb, usable_file_mb,
+round(((total_mb-nvl(free_mb,0))/total_mb)*100,0) percent_used
+from V$ASM_DISKGROUP_STAT;
+
+
+ALTER TABLESPACE VEX2 ADD DATAFILE '+RECO' SIZE 1G AUTOEXTEND ON NEXT 1G MAXSIZE UNLIMITED;
